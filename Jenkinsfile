@@ -2,7 +2,7 @@ pipeline {
   agent any
   triggers { githubPush() }
   environment {
-    DOCKER_USER = 'YOUR_DOCKERHUB_USERNAME'
+    DOCKER_USER = 'sami01122'
     TAG         = "${env.BUILD_NUMBER}"
     KUBECONFIG  = '/var/lib/jenkins/.kube/config'
     NS          = 'event-system'
