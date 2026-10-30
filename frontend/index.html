@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Event Management System</title>
+<style>
+ body{font-family:system-ui,sans-serif;max-width:900px;margin:30px auto;padding:0 16px;background:#f5f6fa;color:#222}
+ h1{margin-bottom:4px} .card{background:#fff;border-radius:10px;padding:16px;margin:14px 0;box-shadow:0 1px 4px #0001}
+ input,select,button{padding:8px;margin:4px 4px 4px 0;border:1px solid #ccc;border-radius:6px}
+ button{background:#2f6fed;color:#fff;border:none;cursor:pointer} table{width:100%;border-collapse:collapse}
+ td,th{text-align:left;padding:6px;border-bottom:1px solid #eee}
+</style></head><body>
+<h1>Event Management System</h1><small>3-tier app · Kubernetes microservices</small>
+
+<div class="card"><h3>Create event</h3>
+ <input id="t" placeholder="Title"><input id="l" placeholder="Location"><input id="d" type="date">
+ <input id="s" type="number" placeholder="Seats" style="width:90px"><button onclick="addEvent()">Add</button></div>
+
+<div class="card"><h3>Events</h3><table><thead><tr><th>Title</th><th>Location</th><th>Date</th><th>Seats left</th><th></th></tr></thead><tbody id="events"></tbody></table></div>
+
+<div class="card"><h3>Book tickets</h3>
+ <select id="be"></select><input id="bn" placeholder="Name"><input id="bm" placeholder="Email">
+ <input id="bs" type="number" value="1" min="1" style="width:70px"><button onclick="book()">Book</button> <span id="msg"></span></div>
+
+<div class="card"><h3>Bookings</h3><table><thead><tr><th>ID</th><th>Event</th><th>Name</th><th>Email</th><th>Seats</th></tr></thead><tbody id="bookings"></tbody></table></div>
+
+<script>
+const $=id=>document.getElementById(id);
+async function load(){
+  const ev=await (await fetch('/api/events')).json();
+  $('events').innerHTML=ev.map(e=>`<tr><td>${e.title}</td><td>${e.location||''}</td><td>${(e.event_date||'').slice(0,10)}</td><td>${e.available_seats}/${e.total_seats}</td><td><button onclick="del(${e.id})">Delete</button></td></tr>`).join('');
+  $('be').innerHTML=ev.map(e=>`<option value="${e.id}">${e.title}</option>`).join('');
+  const b=await (await fetch('/api/bookings')).json();
+  $('bookings').innerHTML=b.map(x=>`<tr><td>${x.id}</td><td>${x.event_id}</td><td>${x.name}</td><td>${x.email}</td><td>${x.seats}</td></tr>`).join('');
+}
+async function addEvent(){
+  await fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({title:$('t').value,location:$('l').value,event_date:$('d').value||null,total_seats:+$('s').value})});
+  load();
+}
+async function del(id){await fetch('/api/events/'+id,{method:'DELETE'});load();}
+async function book(){
+  const r=await fetch('/api/bookings',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({event_id:+$('be').value,name:$('bn').value,email:$('bm').value,seats:+$('bs').value})});
+  const j=await r.json(); $('msg').textContent=r.ok?'Booked!':(j.error||'Error'); load();
+}
+load();
+</script></body></html>

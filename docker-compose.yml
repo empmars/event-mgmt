@@ -1,0 +1,15 @@
+# Local testing only:  docker compose up --build   -> http://localhost:8081
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: eventuser, POSTGRES_PASSWORD: eventpass, POSTGRES_DB: eventsdb }
+  event-service:
+    build: ./event-service
+    depends_on: [postgres]
+  booking-service:
+    build: ./booking-service
+    depends_on: [postgres, event-service]
+  frontend:
+    build: ./frontend
+    ports: ["8081:80"]
+    depends_on: [event-service, booking-service]
